@@ -1,5 +1,8 @@
 package com.wiwitech.mecanetbackend.shared.infrastructure.multitenancy;
 
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 /**
  * Thread-safe context holder for tenant information
  * This class provides a way to store and retrieve tenant information
@@ -20,6 +23,7 @@ public class TenantContext {
      */
     public static void setCurrentTenantId(Long tenantId) {
         CURRENT_TENANT_ID.set(tenantId != null ? tenantId : DEFAULT_TENANT_ID);
+        log.info("Setting tenant ID to {}", tenantId);
     }
     
     /**
