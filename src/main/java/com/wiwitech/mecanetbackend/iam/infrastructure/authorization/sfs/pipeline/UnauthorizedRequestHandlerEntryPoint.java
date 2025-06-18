@@ -1,39 +1,48 @@
 package com.wiwitech.mecanetbackend.iam.infrastructure.authorization.sfs.pipeline;
-import jakarta.servlet.ServletException;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.MediaType;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
- * Unauthorized Request Handler.
+ * Unauthorized Request Handler Entry Point
  * <p>
- * This class is responsible for handling unauthorized requests.
- * It is used by the Spring Security framework to handle unauthorized requests.
- * It implements the AuthenticationEntryPoint interface.
+ * This class handles unauthorized requests by returning a JSON response
+ * with error details when authentication fails.
  * </p>
- * @see AuthenticationEntryPoint
  */
-
 @Component
 public class UnauthorizedRequestHandlerEntryPoint implements AuthenticationEntryPoint {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(UnauthorizedRequestHandlerEntryPoint.class);
 
-    /**
-     * This method is called by the Spring Security framework when an unauthorized request is detected.
-     * @param request The request that caused the exception
-     * @param response The response that will be sent to the client
-     * @param authenticationException The exception that caused the invocation
-     */
     @Override
-    public void commence(HttpServletRequest request, HttpServletResponse response, AuthenticationException authenticationException) throws IOException, ServletException {
-        LOGGER.error("Unauthorized request: {}", authenticationException.getMessage());
-        response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized request detected");
+    public void commence(HttpServletRequest request, HttpServletResponse response,
+                        AuthenticationException authException) throws IOException {
+        
+        LOGGER.error("Unauthorized error: {}", authException.getMessage());
+        
+        response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+        
+        Map<String, Object> body = new HashMap<>();
+        body.put("status", HttpServletResponse.SC_UNAUTHORIZED);
+        body.put("error", "Unauthorized");
+        body.put("message", authException.getMessage());
+        body.put("path", request.getServletPath());
+        body.put("timestamp", System.currentTimeMillis());
+        
+        ObjectMapper mapper = new ObjectMapper();
+        mapper.writeValue(response.getOutputStream(), body);
     }
-}
+} 

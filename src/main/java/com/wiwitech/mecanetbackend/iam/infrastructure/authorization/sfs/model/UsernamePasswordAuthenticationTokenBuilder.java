@@ -7,7 +7,7 @@ import org.springframework.security.web.authentication.WebAuthenticationDetailsS
 
 /**
  * This class is used to build the UsernamePasswordAuthenticationToken object
- * that is used to authenticate the user.
+ * that is used to authenticate the user with multitenancy support.
  */
 public class UsernamePasswordAuthenticationTokenBuilder {
 
@@ -20,8 +20,28 @@ public class UsernamePasswordAuthenticationTokenBuilder {
      * @see UserDetails
      */
     public static UsernamePasswordAuthenticationToken build(UserDetails principal, HttpServletRequest request) {
-        var usernamePasswordAuthenticationToken = new UsernamePasswordAuthenticationToken(principal, null, principal.getAuthorities());
-        usernamePasswordAuthenticationToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+        var usernamePasswordAuthenticationToken = new UsernamePasswordAuthenticationToken(
+                principal, 
+                null, 
+                principal.getAuthorities()
+        );
+        usernamePasswordAuthenticationToken.setDetails(
+                new WebAuthenticationDetailsSource().buildDetails(request)
+        );
         return usernamePasswordAuthenticationToken;
+    }
+
+    /**
+     * This method is responsible for building the UsernamePasswordAuthenticationToken object
+     * without HTTP request details (useful for programmatic authentication).
+     * @param principal The user details.
+     * @return The UsernamePasswordAuthenticationToken object.
+     */
+    public static UsernamePasswordAuthenticationToken build(UserDetails principal) {
+        return new UsernamePasswordAuthenticationToken(
+                principal, 
+                null, 
+                principal.getAuthorities()
+        );
     }
 }

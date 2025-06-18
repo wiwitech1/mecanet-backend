@@ -17,11 +17,14 @@ import com.wiwitech.mecanetbackend.iam.domain.services.UserQueryService;
 import com.wiwitech.mecanetbackend.iam.infrastructure.persistence.jpa.repositories.UserRepository;
 import com.wiwitech.mecanetbackend.shared.infrastructure.multitenancy.TenantContext;
 
+import lombok.extern.slf4j.Slf4j;
+
 /**
  * User query service implementation
  * This service handles user query operations with multitenancy support
  */
 @Service
+@Slf4j
 public class UserQueryServiceImpl implements UserQueryService {
     
     private final UserRepository userRepository;
@@ -38,6 +41,7 @@ public class UserQueryServiceImpl implements UserQueryService {
     public List<User> handle(GetAllUsersQuery query) {
         // Filter by current tenant
         Long tenantId = TenantContext.getCurrentTenantId();
+        log.info("Getting all users for tenant {}", tenantId);
         return userRepository.findAllByTenantId(tenantId);
     }
     
