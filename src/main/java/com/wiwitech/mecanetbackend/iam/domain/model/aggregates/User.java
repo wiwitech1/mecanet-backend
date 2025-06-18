@@ -2,6 +2,8 @@ package com.wiwitech.mecanetbackend.iam.domain.model.aggregates;
 
 import com.wiwitech.mecanetbackend.iam.domain.model.entities.Role;
 import com.wiwitech.mecanetbackend.shared.domain.model.aggregates.AuditableAbstractAggregateRoot;
+
+import com.wiwitech.mecanetbackend.shared.domain.model.valueobjects.EmailAddress;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
@@ -32,6 +34,21 @@ public class User extends AuditableAbstractAggregateRoot<User> {
     @Size(max = 120)
     private String password;
 
+    @Embedded
+    private EmailAddress email;
+
+    @Size(max = 50)
+    private String firstName;
+
+    @Size(max = 50)
+    private String lastName;
+
+    @Column(nullable = false)
+    private Boolean active;
+
+    @Column(nullable = false)
+    private Long tenantId;
+
     @ManyToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     @JoinTable( name = "user_roles",
             joinColumns = @JoinColumn(name = "user_id"),
@@ -40,17 +57,53 @@ public class User extends AuditableAbstractAggregateRoot<User> {
 
     public User() {
         this.roles = new HashSet<>();
+        this.active = true;
     }
-    public User(String username, String password) {
+    public User(String username, String password, EmailAddress email, String firstName, String lastName,Long tenantId) {
         this.username = username;
         this.password = password;
+        this.email = email;
+        this.firstName = firstName;
+        this.lastName = lastName;
+        this.tenantId = tenantId;
         this.roles = new HashSet<>();
     }
 
-    public User(String username, String password, List<Role> roles) {
-        this(username, password);
+    public User(String username, String password, EmailAddress email, 
+                String firstName, String lastName, Long tenantId, List<Role> roles) {
+        this(username, password, email, firstName, lastName, tenantId);
         addRoles(roles);
     }
+
+
+    public void activate() {
+        this.active = true;
+    }
+    
+    public void deactivate() {
+        this.active = false;
+    }
+    
+    public boolean isActive() {
+        return this.active;
+    }
+    
+    public String getFullName() {
+        return String.format("%s %s", firstName, lastName);
+    }
+    
+    public void updatePassword(String newPassword) {
+        this.password = newPassword;
+    }
+
+    public String getEmail() {
+        return email != null ? email.value() : null;
+    }
+    
+    public void setEmail(String emailValue) {
+        this.email = emailValue != null ? new EmailAddress(emailValue) : null;
+    }
+    
 
     /**
      * Add a role to the user

@@ -1,62 +1,80 @@
 package com.wiwitech.mecanetbackend.iam.application.internal.queryservices;
 
+import java.util.List;
+import java.util.Optional;
+
+import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.springframework.stereotype.Service;
+
+import com.wiwitech.mecanetbackend.iam.application.internal.outboundservices.hashing.HashingService;
+import com.wiwitech.mecanetbackend.iam.application.internal.outboundservices.tokens.TokenService;
 import com.wiwitech.mecanetbackend.iam.domain.model.aggregates.User;
+import com.wiwitech.mecanetbackend.iam.domain.model.commands.SignInCommand;
 import com.wiwitech.mecanetbackend.iam.domain.model.queries.GetAllUsersQuery;
 import com.wiwitech.mecanetbackend.iam.domain.model.queries.GetUserByIdQuery;
 import com.wiwitech.mecanetbackend.iam.domain.model.queries.GetUserByUsernameQuery;
 import com.wiwitech.mecanetbackend.iam.domain.services.UserQueryService;
 import com.wiwitech.mecanetbackend.iam.infrastructure.persistence.jpa.repositories.UserRepository;
-import org.springframework.stereotype.Service;
-
-import java.util.List;
-import java.util.Optional;
+import com.wiwitech.mecanetbackend.shared.infrastructure.multitenancy.TenantContext;
 
 /**
- * Implementation of {@link UserQueryService} interface.
+ * User query service implementation
+ * This service handles user query operations with multitenancy support
  */
 @Service
 public class UserQueryServiceImpl implements UserQueryService {
+    
     private final UserRepository userRepository;
-
-    /**
-     * Constructor.
-     *
-     * @param userRepository {@link UserRepository} instance.
-     */
-    public UserQueryServiceImpl(UserRepository userRepository) {
+    private final HashingService hashingService;
+    private final TokenService tokenService;
+    
+    public UserQueryServiceImpl(UserRepository userRepository, HashingService hashingService, TokenService tokenService) {
         this.userRepository = userRepository;
+        this.hashingService = hashingService;
+        this.tokenService = tokenService;
     }
-
-    /**
-     * This method is used to handle {@link GetAllUsersQuery} query.
-     * @param query {@link GetAllUsersQuery} instance.
-     * @return {@link List} of {@link User} instances.
-     * @see GetAllUsersQuery
-     */
+    
     @Override
     public List<User> handle(GetAllUsersQuery query) {
-        return userRepository.findAll();
+        // Filter by current tenant
+        Long tenantId = TenantContext.getCurrentTenantId();
+        return userRepository.findAllByTenantId(tenantId);
     }
-
-    /**
-     * This method is used to handle {@link GetUserByIdQuery} query.
-     * @param query {@link GetUserByIdQuery} instance.
-     * @return {@link Optional} of {@link User} instance.
-     * @see GetUserByIdQuery
-     */
+    
     @Override
     public Optional<User> handle(GetUserByIdQuery query) {
-        return userRepository.findById(query.userId());
+        // Filter by current tenant
+        Long tenantId = TenantContext.getCurrentTenantId();
+        return userRepository.findByIdAndTenantId(query.userId(), tenantId);
     }
-
-    /**
-     * This method is used to handle {@link GetUserByUsernameQuery} query.
-     * @param query {@link GetUserByUsernameQuery} instance.
-     * @return {@link Optional} of {@link User} instance.
-     * @see GetUserByUsernameQuery
-     */
+    
     @Override
     public Optional<User> handle(GetUserByUsernameQuery query) {
-        return userRepository.findByUsername(query.username());
+        // Filter by current tenant
+        Long tenantId = TenantContext.getCurrentTenantId();
+        return userRepository.findByUsernameAndTenantId(query.username(), tenantId);
     }
-}
+    
+    @Override
+    public ImmutablePair<User, String> handle(SignInCommand command) {
+        // Find user by username and current tenant
+        User user = userRepository.findByUsername(command.username())
+                .orElseThrow(() -> new RuntimeException("Invalid credentials"));
+
+        
+        // Verify password
+        if (!hashingService.matches(command.password(), user.getPassword())) {
+            throw new RuntimeException("Invalid credentials");
+        }
+        
+        // Check if user is active
+        if (!user.isActive()) {
+            throw new RuntimeException("User account is disabled");
+        }
+        
+        // Generate token
+        String token = tokenService.generateToken(user.getUsername(), user.getTenantId());
+        
+        return ImmutablePair.of(user, token);
+    }
+} 

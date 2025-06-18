@@ -11,5 +11,6 @@ public class FlywayConfiguration {
 
     @Autowired
     public FlywayConfiguration(DataSource dataSource) {
+        
     }
 }
