@@ -11,6 +11,6 @@ public class FlywayConfiguration {
 
     @Autowired
     public FlywayConfiguration(DataSource dataSource) {
-        
+        Flyway.configure().baselineOnMigrate(true).dataSource(dataSource).load().migrate();
     }
 }
