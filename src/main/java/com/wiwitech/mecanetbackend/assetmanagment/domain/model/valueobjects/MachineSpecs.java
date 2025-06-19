@@ -1,7 +1,6 @@
 package com.wiwitech.mecanetbackend.assetmanagment.domain.model.valueobjects;
 
 import jakarta.persistence.Embeddable;
-import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Size;
 import lombok.Getter;
 

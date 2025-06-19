@@ -8,6 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.context.ApplicationEventPublisher;
 
 import com.wiwitech.mecanetbackend.iam.application.internal.outboundservices.hashing.HashingService;
 import com.wiwitech.mecanetbackend.iam.application.internal.outboundservices.tokens.TokenService;
@@ -24,6 +25,7 @@ import com.wiwitech.mecanetbackend.iam.infrastructure.persistence.jpa.repositori
 import com.wiwitech.mecanetbackend.iam.infrastructure.persistence.jpa.repositories.TenantRepository;
 import com.wiwitech.mecanetbackend.iam.infrastructure.persistence.jpa.repositories.UserRepository;
 import com.wiwitech.mecanetbackend.shared.infrastructure.multitenancy.TenantContext;
+import com.wiwitech.mecanetbackend.iam.domain.model.events.UserCreatedEvent;
 
 /**
  * User command service implementation
@@ -39,15 +41,18 @@ public class UserCommandServiceImpl implements UserCommandService {
     private final RoleRepository roleRepository;
     private final HashingService hashingService;
     private final TokenService tokenService;
+    private final ApplicationEventPublisher eventPublisher;
     
     public UserCommandServiceImpl(UserRepository userRepository, TenantRepository tenantRepository,
                                  RoleRepository roleRepository, HashingService hashingService, 
-                                 TokenService tokenService) {
+                                 TokenService tokenService,
+                                 ApplicationEventPublisher eventPublisher) {
         this.userRepository = userRepository;
         this.tenantRepository = tenantRepository;
         this.roleRepository = roleRepository;
         this.hashingService = hashingService;
         this.tokenService = tokenService;
+        this.eventPublisher = eventPublisher;
     }
     
     @Override
@@ -117,6 +122,23 @@ public class UserCommandServiceImpl implements UserCommandService {
             String token = tokenService.generateToken(savedUser.getUsername(), savedTenant.getId());
             logger.info("Token generated successfully for user: {}", savedUser.getUsername());
             
+            // ---------- Publicar evento de dominio ----------
+            eventPublisher.publishEvent(
+                new UserCreatedEvent(
+                    savedUser.getId(),
+                    savedUser.getUsername(),
+                    savedUser.getFirstName(),
+                    savedUser.getLastName(),
+                    savedUser.getEmail(),
+                    savedTenant.getId(),
+                    savedUser.getRoles()
+                             .stream()
+                             .map(Role::getStringName)
+                             .toList()
+                )
+            );
+            // ------------------------------------------------
+
             return ImmutablePair.of(savedUser, token);
             
         } finally {
@@ -161,6 +183,23 @@ public class UserCommandServiceImpl implements UserCommandService {
         User savedUser = userRepository.save(user);
         logger.info("User created successfully with ID: {}", savedUser.getId());
         
+        // ---------- Publicar evento de dominio ----------
+        eventPublisher.publishEvent(
+            new UserCreatedEvent(
+                savedUser.getId(),
+                savedUser.getUsername(),
+                savedUser.getFirstName(),
+                savedUser.getLastName(),
+                savedUser.getEmail(),
+                tenantId,
+                savedUser.getRoles()
+                         .stream()
+                         .map(Role::getStringName)
+                         .toList()
+            )
+        );
+        // ------------------------------------------------
+
         return savedUser;
     }
     

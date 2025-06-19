@@ -15,6 +15,7 @@ import com.wiwitech.mecanetbackend.shared.domain.model.valueobjects.TenantId;
 import jakarta.persistence.Column;
 import jakarta.persistence.Embedded;
 import jakarta.persistence.Entity;
+import jakarta.persistence.AttributeOverride;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Table;
@@ -53,6 +54,8 @@ public class ProductionLine extends AuditableAbstractAggregateRoot<ProductionLin
     
     @Embedded
     @NotNull
+    @AttributeOverride(name = "value",
+        column = @Column(name = "tenant_id", nullable = false))
     private TenantId tenantId;  // ✅ Usando Value Object del Shared Kernel
     
     // ✅ Constructor completo con validaciones
@@ -114,7 +117,6 @@ public class ProductionLine extends AuditableAbstractAggregateRoot<ProductionLin
     
     public void stopProduction() {
         validateCanStopProduction();
-        
         ProductionLineStatus previousStatus = this.status;
         this.status = ProductionLineStatus.STOPPED;
         

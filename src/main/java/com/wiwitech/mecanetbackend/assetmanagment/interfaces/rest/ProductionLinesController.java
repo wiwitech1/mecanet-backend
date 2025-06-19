@@ -59,7 +59,7 @@ public class ProductionLinesController {
     /**
      * Get running production lines for the current tenant
      */
-    @GetMapping("/running")
+/*     @GetMapping("/running")
     @Operation(summary = "Get running production lines", description = "Get all running production lines for the current tenant")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Running production lines retrieved successfully")})
@@ -74,7 +74,7 @@ public class ProductionLinesController {
         
         logger.info("Retrieved {} running production lines", productionLineResources.size());
         return ResponseEntity.ok(productionLineResources);
-    }
+    } */
 
     /**
      * Get production line by ID
@@ -142,7 +142,7 @@ public class ProductionLinesController {
     /**
      * Start production on a production line
      */
-    @PutMapping("/{productionLineId}/start")
+/*     @PutMapping("/{productionLineId}/start")
     @Operation(summary = "Start production", description = "Start production on a production line")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Production started successfully"),
@@ -157,12 +157,12 @@ public class ProductionLinesController {
         
         logger.info("Production started successfully on line: {}", productionLineResource.name());
         return ResponseEntity.ok(productionLineResource);
-    }
+    } */
     
     /**
      * Stop production on a production line
      */
-    @PutMapping("/{productionLineId}/stop")
+/*     @PutMapping("/{productionLineId}/stop")
     @Operation(summary = "Stop production", description = "Stop production on a production line")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Production stopped successfully"),
@@ -177,5 +177,5 @@ public class ProductionLinesController {
         
         logger.info("Production stopped successfully on line: {}", productionLineResource.name());
         return ResponseEntity.ok(productionLineResource);
-    }
+    } */
 }

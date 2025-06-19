@@ -13,6 +13,7 @@ import com.wiwitech.mecanetbackend.assetmanagment.domain.model.events.PlantCreat
 import jakarta.persistence.Column;
 import jakarta.persistence.Embedded;
 import jakarta.persistence.Entity;
+import jakarta.persistence.AttributeOverride;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -44,6 +45,8 @@ public class Plant extends AuditableAbstractAggregateRoot<Plant> {
     private Boolean active;
     
     @Embedded
+    @AttributeOverride(name = "value",
+        column = @Column(name = "tenant_id", nullable = false))
     @NotNull
     private TenantId tenantId;  // ✅ Usando Value Object del Shared Kernel
     
