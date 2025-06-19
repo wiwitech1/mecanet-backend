@@ -231,7 +231,7 @@ public class MachinesController {
     /**
      * Start machine maintenance
      */
-    @PutMapping("/{machineId}/maintenance/start")
+   /*  @PutMapping("/{machineId}/maintenance/start")
     @Operation(summary = "Start machine maintenance", description = "Start maintenance on a machine")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Maintenance started successfully"),
@@ -246,11 +246,11 @@ public class MachinesController {
         logger.info("Maintenance started successfully for machine: {}", machineResource.serialNumber());
         return ResponseEntity.ok(machineResource);
     }
-    
+     */
     /**
      * Complete machine maintenance
      */
-    @PutMapping("/{machineId}/maintenance/complete")
+ /*    @PutMapping("/{machineId}/maintenance/complete")
     @Operation(summary = "Complete machine maintenance", description = "Complete maintenance on a machine")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Maintenance completed successfully"),
@@ -264,5 +264,5 @@ public class MachinesController {
         
         logger.info("Maintenance completed successfully for machine: {}", machineResource.serialNumber());
         return ResponseEntity.ok(machineResource);
-    }
+    } */
 }

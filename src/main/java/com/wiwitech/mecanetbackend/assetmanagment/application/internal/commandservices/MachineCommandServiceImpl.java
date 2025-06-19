@@ -4,6 +4,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.context.ApplicationEventPublisher;
 
 import com.wiwitech.mecanetbackend.assetmanagment.domain.model.aggregates.Machine;
 import com.wiwitech.mecanetbackend.assetmanagment.domain.model.commands.AssignMachineToProductionLineCommand;
@@ -15,6 +16,7 @@ import com.wiwitech.mecanetbackend.assetmanagment.infrastructure.persistence.jpa
 import com.wiwitech.mecanetbackend.assetmanagment.infrastructure.persistence.jpa.repositories.ProductionLineRepository;
 import com.wiwitech.mecanetbackend.shared.domain.model.valueobjects.TenantId;
 import com.wiwitech.mecanetbackend.shared.infrastructure.multitenancy.TenantContext;
+import com.wiwitech.mecanetbackend.assetmanagment.domain.model.events.MachineCreatedEvent;
 
 /**
  * Machine command service implementation
@@ -27,11 +29,14 @@ public class MachineCommandServiceImpl implements MachineCommandService {
     
     private final MachineRepository machineRepository;
     private final ProductionLineRepository productionLineRepository;
+    private final ApplicationEventPublisher eventPublisher;
     
     public MachineCommandServiceImpl(MachineRepository machineRepository, 
-                                   ProductionLineRepository productionLineRepository) {
+                                   ProductionLineRepository productionLineRepository,
+                                   ApplicationEventPublisher eventPublisher) {
         this.machineRepository = machineRepository;
         this.productionLineRepository = productionLineRepository;
+        this.eventPublisher = eventPublisher;
     }
     
     @Override
@@ -59,6 +64,10 @@ public class MachineCommandServiceImpl implements MachineCommandService {
         Machine savedMachine = machineRepository.save(machine);
         logger.info("Machine registered successfully with ID: {}", savedMachine.getId());
         
+        // ---- publish domain event for other bounded-contexts ----
+        eventPublisher.publishEvent(new MachineCreatedEvent(savedMachine.getId(), tenantId));
+        // ---------------------------------------------------------
+
         return savedMachine;
     }
     

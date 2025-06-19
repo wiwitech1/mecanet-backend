@@ -2,25 +2,23 @@ package com.wiwitech.mecanetbackend.shared.domain.model.valueobjects;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
+import lombok.AccessLevel;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 @Getter
 @Embeddable
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class TenantId {
 
     @Column(nullable = false)
-    private final Long value;
+    private Long value;
 
     public TenantId(Long value) {
         if (value == null || value <= 0) {
             throw new IllegalArgumentException("Tenant ID must be a positive number");
         }
         this.value = value;
-    }
-
-    public TenantId() {
-        // Constructor por defecto para JPA
-        this.value = 1L; // Valor por defecto
     }
 
     @Override

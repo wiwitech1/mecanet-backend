@@ -18,6 +18,7 @@ import jakarta.persistence.Embedded;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.EnumType;
+import jakarta.persistence.AttributeOverride;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -55,6 +56,8 @@ public class Machine extends AuditableAbstractAggregateRoot<Machine> {
     private Long productionLineId;
     
     @Embedded
+    @AttributeOverride(name = "value",
+    column = @Column(name = "tenant_id", nullable = false))
     @NotNull
     private TenantId tenantId;  // ✅ Usando Value Object del Shared Kernel
     
