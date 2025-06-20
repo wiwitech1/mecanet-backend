@@ -49,6 +49,16 @@ public class MaintenancePlanQueryServiceImpl implements MaintenancePlanQueryServ
                          .toList();
     }
 
+    @Override
+    public List<DynamicMaintenancePlan> handle(GetAllDynamicPlansQuery query) {
+        return repository.findByTenantIdValue(TenantContext.getCurrentTenantId());
+    }
+
+    @Override
+    public List<StaticMaintenancePlan> handle(GetAllStaticPlansQuery query) {
+        return repository.findStaticMaintenancePlanByTenantIdValue(TenantContext.getCurrentTenantId());
+    }
+
     /* -------- helper -------- */
     private boolean isScheduledFor(StaticMaintenancePlan plan, LocalDate date) {
         if (!plan.isActiveOn(date)) return false;

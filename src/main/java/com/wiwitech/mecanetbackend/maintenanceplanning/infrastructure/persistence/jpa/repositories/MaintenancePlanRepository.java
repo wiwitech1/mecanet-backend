@@ -19,4 +19,8 @@ public interface MaintenancePlanRepository extends JpaRepository<MaintenancePlan
     /* estático: todos los planes activos cuyo periodo incluya la fecha */
     List<StaticMaintenancePlan> findByPeriodStartDateLessThanEqualAndPeriodEndDateGreaterThanEqualAndTenantIdValue(
             LocalDate start, LocalDate end, Long tenantId);
+
+    /* listar por tenant */
+    List<DynamicMaintenancePlan> findByTenantIdValue(Long tenantId);
+    List<StaticMaintenancePlan>  findStaticMaintenancePlanByTenantIdValue(Long tenantId);
 }
