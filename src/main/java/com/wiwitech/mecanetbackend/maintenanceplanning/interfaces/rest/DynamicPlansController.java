@@ -1,6 +1,7 @@
 package com.wiwitech.mecanetbackend.maintenanceplanning.interfaces.rest;
 
 import com.wiwitech.mecanetbackend.maintenanceplanning.domain.model.commands.DeactivatePlanCommand;
+import com.wiwitech.mecanetbackend.maintenanceplanning.domain.model.queries.GetAllDynamicPlansQuery;
 import com.wiwitech.mecanetbackend.maintenanceplanning.domain.model.queries.GetMaintenancePlanByIdQuery;
 import com.wiwitech.mecanetbackend.maintenanceplanning.domain.services.MaintenancePlanCommandService;
 import com.wiwitech.mecanetbackend.maintenanceplanning.domain.services.MaintenancePlanQueryService;
@@ -15,6 +16,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 /**
  * Controller para gestión de planes de mantenimiento dinámicos
@@ -77,5 +80,16 @@ public class DynamicPlansController {
     public ResponseEntity<Void> deactivatePlan(@PathVariable Long planId) {
         commandService.handle(new DeactivatePlanCommand(planId));
         return ResponseEntity.ok().build();
+    }
+
+    @GetMapping
+    @Operation(summary = "Listar planes dinámicos",
+               description = "Devuelve todos los planes dinámicos del tenant actual")
+    public ResponseEntity<List<DynamicPlanResource>> getAll() {
+        var resources = queryService.handle(new GetAllDynamicPlansQuery())
+                                    .stream()
+                                    .map(DynamicPlanResourceFromEntityAssembler::toResource)
+                                    .toList();
+        return ResponseEntity.ok(resources);
     }
 }

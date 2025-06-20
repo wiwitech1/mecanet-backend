@@ -1,6 +1,7 @@
 package com.wiwitech.mecanetbackend.maintenanceplanning.interfaces.rest;
 
 import com.wiwitech.mecanetbackend.maintenanceplanning.domain.model.commands.*;
+import com.wiwitech.mecanetbackend.maintenanceplanning.domain.model.queries.GetAllStaticPlansQuery;
 import com.wiwitech.mecanetbackend.maintenanceplanning.domain.model.queries.GetMaintenancePlanByIdQuery;
 import com.wiwitech.mecanetbackend.maintenanceplanning.domain.services.MaintenancePlanCommandService;
 import com.wiwitech.mecanetbackend.maintenanceplanning.domain.services.MaintenancePlanQueryService;
@@ -17,6 +18,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Collections;
+import java.util.List;
 
 /**
  * Controller para gestión de planes de mantenimiento estáticos
@@ -99,5 +101,16 @@ public class StaticPlansController {
     public ResponseEntity<Void> deactivatePlan(@PathVariable Long planId) {
         commandService.handle(new DeactivatePlanCommand(planId));
         return ResponseEntity.ok().build();
+    }
+
+    @GetMapping
+    @Operation(summary = "Listar planes estáticos",
+               description = "Devuelve todos los planes estáticos del tenant actual")
+    public ResponseEntity<List<StaticPlanResource>> getAll() {
+        var resources = queryService.handle(new GetAllStaticPlansQuery())
+                                    .stream()
+                                    .map(StaticPlanResourceFromEntityAssembler::toResource)
+                                    .toList();
+        return ResponseEntity.ok(resources);
     }
 }

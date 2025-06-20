@@ -12,4 +12,6 @@ public interface MaintenancePlanQueryService {
     Optional<MaintenancePlan>          handle(GetMaintenancePlanByIdQuery query);
     List<DynamicMaintenancePlan>       handle(GetDynamicPlansByMetricAndMachineQuery query);
     List<StaticMaintenancePlan>         handle(GetStaticPlansScheduledForDateQuery query);
+    List<DynamicMaintenancePlan> handle(GetAllDynamicPlansQuery query);
+    List<StaticMaintenancePlan>  handle(GetAllStaticPlansQuery   query);
 }
