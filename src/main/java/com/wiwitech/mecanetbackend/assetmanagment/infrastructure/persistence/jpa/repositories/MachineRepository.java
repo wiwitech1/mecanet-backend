@@ -86,4 +86,6 @@ public interface MachineRepository extends JpaRepository<Machine, Long> {
      */
     @Query("SELECT m FROM Machine m WHERE m.status = :status AND m.tenantId.value = :tenantId")
     List<Machine> findByStatusAndTenantId(@Param("status") MachineStatus status, @Param("tenantId") Long tenantId);
+
+    long countByTenantIdValueAndStatus(Long tenantId, MachineStatus status);
 }

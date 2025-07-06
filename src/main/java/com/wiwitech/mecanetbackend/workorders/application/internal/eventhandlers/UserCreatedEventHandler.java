@@ -9,7 +9,7 @@ import com.wiwitech.mecanetbackend.workorders.domain.services.TechnicianCommandS
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 
-@Component
+@Component("workordersUserCreatedEventHandler")
 public class UserCreatedEventHandler {
 
     private static final String TECHNICIAN_ROLE = "ROLE_TECHNICAL";

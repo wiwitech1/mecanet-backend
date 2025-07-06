@@ -14,6 +14,8 @@ import com.wiwitech.mecanetbackend.assetmanagment.domain.services.PlantCommandSe
 import com.wiwitech.mecanetbackend.assetmanagment.infrastructure.persistence.jpa.repositories.PlantRepository;
 import com.wiwitech.mecanetbackend.shared.domain.model.valueobjects.TenantId;
 import com.wiwitech.mecanetbackend.shared.infrastructure.multitenancy.TenantContext;
+import com.wiwitech.mecanetbackend.assetmanagment.domain.exceptions.PlantLimitExceededException;
+import com.wiwitech.mecanetbackend.subscription.interfaces.acl.SubscriptionLimitsContextFacade;
 
 /**
  * Plant command service implementation
@@ -25,9 +27,12 @@ public class PlantCommandServiceImpl implements PlantCommandService {
     private static final Logger logger = LoggerFactory.getLogger(PlantCommandServiceImpl.class);
     
     private final PlantRepository plantRepository;
+    private final SubscriptionLimitsContextFacade subscriptionLimitsFacade;
     
-    public PlantCommandServiceImpl(PlantRepository plantRepository) {
+    public PlantCommandServiceImpl(PlantRepository plantRepository, 
+                                 SubscriptionLimitsContextFacade subscriptionLimitsFacade) {
         this.plantRepository = plantRepository;
+        this.subscriptionLimitsFacade = subscriptionLimitsFacade;
     }
     
     @Override
@@ -43,6 +48,13 @@ public class PlantCommandServiceImpl implements PlantCommandService {
         // Validar que no exista una planta con el mismo nombre en el tenant
         if (plantRepository.existsByNameAndTenantId(command.name(), tenantId)) {
             throw new RuntimeException("A plant with this name already exists in this organization");
+        }
+        
+        // Validate plant limit before creating
+        if (!subscriptionLimitsFacade.canCreateResource(tenantId, com.wiwitech.mecanetbackend.subscription.domain.model.valueobjects.SubscriptionLimitType.MAX_PLANTS)) {
+            long currentCount = subscriptionLimitsFacade.getCurrentResourceCount(tenantId, com.wiwitech.mecanetbackend.subscription.domain.model.valueobjects.SubscriptionLimitType.MAX_PLANTS);
+            long limit = subscriptionLimitsFacade.getResourceLimit(tenantId, com.wiwitech.mecanetbackend.subscription.domain.model.valueobjects.SubscriptionLimitType.MAX_PLANTS);
+            throw new PlantLimitExceededException(tenantId, currentCount, limit);
         }
         
         Plant plant = Plant.createNew(

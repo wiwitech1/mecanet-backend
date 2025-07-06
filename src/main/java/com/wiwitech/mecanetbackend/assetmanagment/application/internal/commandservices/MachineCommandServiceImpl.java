@@ -17,6 +17,8 @@ import com.wiwitech.mecanetbackend.assetmanagment.infrastructure.persistence.jpa
 import com.wiwitech.mecanetbackend.shared.domain.model.valueobjects.TenantId;
 import com.wiwitech.mecanetbackend.shared.infrastructure.multitenancy.TenantContext;
 import com.wiwitech.mecanetbackend.assetmanagment.domain.model.events.MachineCreatedEvent;
+import com.wiwitech.mecanetbackend.assetmanagment.domain.exceptions.MachineLimitExceededException;
+import com.wiwitech.mecanetbackend.subscription.interfaces.acl.SubscriptionLimitsContextFacade;
 
 /**
  * Machine command service implementation
@@ -30,13 +32,16 @@ public class MachineCommandServiceImpl implements MachineCommandService {
     private final MachineRepository machineRepository;
     private final ProductionLineRepository productionLineRepository;
     private final ApplicationEventPublisher eventPublisher;
+    private final SubscriptionLimitsContextFacade subscriptionLimitsFacade;
     
     public MachineCommandServiceImpl(MachineRepository machineRepository, 
                                    ProductionLineRepository productionLineRepository,
-                                   ApplicationEventPublisher eventPublisher) {
+                                   ApplicationEventPublisher eventPublisher,
+                                   SubscriptionLimitsContextFacade subscriptionLimitsFacade) {
         this.machineRepository = machineRepository;
         this.productionLineRepository = productionLineRepository;
         this.eventPublisher = eventPublisher;
+        this.subscriptionLimitsFacade = subscriptionLimitsFacade;
     }
     
     @Override
@@ -52,6 +57,13 @@ public class MachineCommandServiceImpl implements MachineCommandService {
         // Validar que serialNumber no exista en el tenant
         if (machineRepository.existsBySerialNumberAndTenantId(command.serialNumber(), tenantId)) {
             throw new RuntimeException("Machine with serial number already exists in this organization");
+        }
+        
+        // Validate machine limit before creating
+        if (!subscriptionLimitsFacade.canCreateResource(tenantId, com.wiwitech.mecanetbackend.subscription.domain.model.valueobjects.SubscriptionLimitType.MAX_MACHINES)) {
+            long currentCount = subscriptionLimitsFacade.getCurrentResourceCount(tenantId, com.wiwitech.mecanetbackend.subscription.domain.model.valueobjects.SubscriptionLimitType.MAX_MACHINES);
+            long limit = subscriptionLimitsFacade.getResourceLimit(tenantId, com.wiwitech.mecanetbackend.subscription.domain.model.valueobjects.SubscriptionLimitType.MAX_MACHINES);
+            throw new MachineLimitExceededException(tenantId, currentCount, limit);
         }
         
         Machine machine = Machine.createNew(

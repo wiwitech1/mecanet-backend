@@ -12,6 +12,11 @@ import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.context.request.WebRequest;
 
+import com.wiwitech.mecanetbackend.iam.domain.exceptions.UserLimitExceededException;
+import com.wiwitech.mecanetbackend.assetmanagment.domain.exceptions.PlantLimitExceededException;
+import com.wiwitech.mecanetbackend.assetmanagment.domain.exceptions.MachineLimitExceededException;
+import com.wiwitech.mecanetbackend.assetmanagment.domain.exceptions.ProductionLineLimitExceededException;
+
 /**
  * Global Exception Handler
  * <p>
@@ -60,6 +65,110 @@ public class GlobalExceptionHandler {
         );
         
         return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+    }
+
+    /**
+     * Handle UserLimitExceededException and return a structured error response
+     */
+    @ExceptionHandler(UserLimitExceededException.class)
+    public ResponseEntity<Map<String, Object>> handleUserLimitExceededException(
+            UserLimitExceededException ex, WebRequest request) {
+        
+        LOGGER.warn("User limit exceeded for tenant {}: current={}, limit={}", 
+                   ex.getTenantId(), ex.getCurrentCount(), ex.getLimit());
+        
+        Map<String, Object> errorResponse = createErrorResponse(
+            HttpStatus.FORBIDDEN.value(),
+            "User Limit Exceeded",
+            ex.getMessage(),
+            request.getDescription(false).replace("uri=", "")
+        );
+        
+        // Agregar información adicional sobre el límite
+        errorResponse.put("tenantId", ex.getTenantId());
+        errorResponse.put("currentCount", ex.getCurrentCount());
+        errorResponse.put("limit", ex.getLimit());
+        errorResponse.put("resourceType", "users");
+        
+        return new ResponseEntity<>(errorResponse, HttpStatus.FORBIDDEN);
+    }
+    
+    /**
+     * Handle PlantLimitExceededException and return a structured error response
+     */
+    @ExceptionHandler(PlantLimitExceededException.class)
+    public ResponseEntity<Map<String, Object>> handlePlantLimitExceededException(
+            PlantLimitExceededException ex, WebRequest request) {
+        
+        LOGGER.warn("Plant limit exceeded for tenant {}: current={}, limit={}", 
+                   ex.getTenantId(), ex.getCurrentCount(), ex.getLimit());
+        
+        Map<String, Object> errorResponse = createErrorResponse(
+            HttpStatus.FORBIDDEN.value(),
+            "Plant Limit Exceeded",
+            ex.getMessage(),
+            request.getDescription(false).replace("uri=", "")
+        );
+        
+        // Agregar información adicional sobre el límite
+        errorResponse.put("tenantId", ex.getTenantId());
+        errorResponse.put("currentCount", ex.getCurrentCount());
+        errorResponse.put("limit", ex.getLimit());
+        errorResponse.put("resourceType", "plants");
+        
+        return new ResponseEntity<>(errorResponse, HttpStatus.FORBIDDEN);
+    }
+    
+    /**
+     * Handle MachineLimitExceededException and return a structured error response
+     */
+    @ExceptionHandler(MachineLimitExceededException.class)
+    public ResponseEntity<Map<String, Object>> handleMachineLimitExceededException(
+            MachineLimitExceededException ex, WebRequest request) {
+        
+        LOGGER.warn("Machine limit exceeded for tenant {}: current={}, limit={}", 
+                   ex.getTenantId(), ex.getCurrentCount(), ex.getLimit());
+        
+        Map<String, Object> errorResponse = createErrorResponse(
+            HttpStatus.FORBIDDEN.value(),
+            "Machine Limit Exceeded",
+            ex.getMessage(),
+            request.getDescription(false).replace("uri=", "")
+        );
+        
+        // Agregar información adicional sobre el límite
+        errorResponse.put("tenantId", ex.getTenantId());
+        errorResponse.put("currentCount", ex.getCurrentCount());
+        errorResponse.put("limit", ex.getLimit());
+        errorResponse.put("resourceType", "machines");
+        
+        return new ResponseEntity<>(errorResponse, HttpStatus.FORBIDDEN);
+    }
+    
+    /**
+     * Handle ProductionLineLimitExceededException and return a structured error response
+     */
+    @ExceptionHandler(ProductionLineLimitExceededException.class)
+    public ResponseEntity<Map<String, Object>> handleProductionLineLimitExceededException(
+            ProductionLineLimitExceededException ex, WebRequest request) {
+        
+        LOGGER.warn("Production line limit exceeded for tenant {}: current={}, limit={}", 
+                   ex.getTenantId(), ex.getCurrentCount(), ex.getLimit());
+        
+        Map<String, Object> errorResponse = createErrorResponse(
+            HttpStatus.FORBIDDEN.value(),
+            "Production Line Limit Exceeded",
+            ex.getMessage(),
+            request.getDescription(false).replace("uri=", "")
+        );
+        
+        // Agregar información adicional sobre el límite
+        errorResponse.put("tenantId", ex.getTenantId());
+        errorResponse.put("currentCount", ex.getCurrentCount());
+        errorResponse.put("limit", ex.getLimit());
+        errorResponse.put("resourceType", "production_lines");
+        
+        return new ResponseEntity<>(errorResponse, HttpStatus.FORBIDDEN);
     }
 
     /**
