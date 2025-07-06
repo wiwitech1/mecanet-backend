@@ -1,0 +1,9 @@
+package com.wiwitech.mecanetbackend.workorders.domain.model.commands;
+
+import com.wiwitech.mecanetbackend.workorders.domain.model.valueobjects.WorkOrderId;
+
+public record AddCommentCommand(
+        WorkOrderId workOrderId,
+        Long authorUserId,
+        String text
+) {} 
