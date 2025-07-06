@@ -2,12 +2,14 @@ package com.wiwitech.mecanetbackend.maintenanceplanning.domain.model.valueobject
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Embeddable
 @Getter
 @NoArgsConstructor
+@EqualsAndHashCode
 public class MachineId {
 
     @Column(name = "machine_id")

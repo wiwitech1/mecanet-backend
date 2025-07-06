@@ -59,4 +59,6 @@ public interface PlantRepository extends JpaRepository<Plant, Long> {
      */
     @Query("SELECT COUNT(pl) FROM ProductionLine pl WHERE pl.plantId = :plantId AND pl.tenantId.value = :tenantId AND pl.status = 'RUNNING'")
     long countActiveProductionLinesByPlantIdAndTenantId(@Param("plantId") Long plantId, @Param("tenantId") Long tenantId);
+
+    long countByTenantIdValueAndActiveTrue(Long tenantId);
 }

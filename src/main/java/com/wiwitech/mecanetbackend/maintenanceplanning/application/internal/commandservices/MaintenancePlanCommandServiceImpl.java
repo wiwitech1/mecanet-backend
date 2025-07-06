@@ -43,13 +43,23 @@ public class MaintenancePlanCommandServiceImpl implements MaintenancePlanCommand
         DynamicMaintenancePlan plan = (DynamicMaintenancePlan) loadPlanOrThrow(cmd.planId());
 
         Set<SkillId> skills = toSkillIds(cmd.skillIds());
-        DynamicTask task   = plan.addTask(new MachineId(cmd.machineId()),
-                                          cmd.taskName(),
-                                          cmd.description(),
-                                          skills);
+        MachineId machineId = new MachineId(cmd.machineId());
+        String taskName = cmd.taskName();
+        String description = cmd.description();
+        
+        plan.addTask(machineId, taskName, description, skills);
+        repository.saveAndFlush(plan); // ✅ FLUSH INMEDIATO - persiste en BD
 
-        repository.save(plan); // cascada persiste la tarea
-        return task;
+        // ✅ RECARGAMOS el plan desde BD con todas las tasks persistidas
+        DynamicMaintenancePlan reloadedPlan = (DynamicMaintenancePlan) loadPlanOrThrow(cmd.planId());
+        
+        // ✅ ENCONTRAMOS la task recién creada
+        return reloadedPlan.getTasks().stream()
+                .filter(t -> t.getMachineId().equals(machineId) 
+                          && t.getName().equals(taskName)
+                          && t.getDescription().equals(description))
+                .max((t1, t2) -> Long.compare(t1.getId(), t2.getId())) // La más reciente
+                .orElseThrow(() -> new IllegalStateException("Task no encontrada después de guardar"));
     }
 
     /* ---------- PLAN ESTÁTICO ---------- */
@@ -68,9 +78,19 @@ public class MaintenancePlanCommandServiceImpl implements MaintenancePlanCommand
     @Override
     public StaticPlanItem handle(AddItemToStaticPlanCommand cmd) {
         StaticMaintenancePlan plan = (StaticMaintenancePlan) loadPlanOrThrow(cmd.planId());
-        StaticPlanItem item = plan.addItem(cmd.dayIndex());
-        repository.save(plan);
-        return item;
+        int dayIndex = cmd.dayIndex();
+        
+        plan.addItem(dayIndex);
+        repository.saveAndFlush(plan); // ✅ FLUSH INMEDIATO - persiste en BD
+
+        // ✅ RECARGAMOS el plan desde BD con todos los items persistidos
+        StaticMaintenancePlan reloadedPlan = (StaticMaintenancePlan) loadPlanOrThrow(cmd.planId());
+        
+        // ✅ ENCONTRAMOS el item recién creado por dayIndex
+        return reloadedPlan.getItems().stream()
+                .filter(item -> item.getDayIndex() == dayIndex)
+                .max((i1, i2) -> Long.compare(i1.getId(), i2.getId())) // El más reciente
+                .orElseThrow(() -> new IllegalStateException("Item no encontrado después de guardar"));
     }
 
     @Override
@@ -83,13 +103,30 @@ public class MaintenancePlanCommandServiceImpl implements MaintenancePlanCommand
                                   .findFirst()
                                   .orElseThrow(() -> new IllegalArgumentException("Ítem no encontrado"));
 
-        StaticTask task = new StaticTask(new MachineId(cmd.machineId()),
-                                         cmd.taskName(),
-                                         cmd.description(),
-                                         toSkillIds(cmd.skillIds()));
+        MachineId machineId = new MachineId(cmd.machineId());
+        String taskName = cmd.taskName();
+        String description = cmd.description();
+        Set<SkillId> skills = toSkillIds(cmd.skillIds());
+        
+        StaticTask task = new StaticTask(machineId, taskName, description, skills);
         item.addTask(task);
-        repository.save(plan); // cascada guarda la tarea
-        return task;
+        repository.saveAndFlush(plan); // ✅ FLUSH INMEDIATO - persiste en BD
+
+        // ✅ RECARGAMOS el plan desde BD
+        StaticMaintenancePlan reloadedPlan = (StaticMaintenancePlan) loadPlanOrThrow(cmd.planId());
+        
+        // ✅ ENCONTRAMOS el item y luego la task recién creada
+        StaticPlanItem reloadedItem = reloadedPlan.getItems().stream()
+                .filter(i -> i.getId().equals(cmd.itemId()))
+                .findFirst()
+                .orElseThrow(() -> new IllegalStateException("Item no encontrado"));
+                
+        return reloadedItem.getTasks().stream()
+                .filter(t -> t.getMachineId().equals(machineId) 
+                          && t.getName().equals(taskName)
+                          && t.getDescription().equals(description))
+                .max((t1, t2) -> Long.compare(t1.getId(), t2.getId())) // La más reciente
+                .orElseThrow(() -> new IllegalStateException("Task no encontrada después de guardar"));
     }
 
     /* ---------- DESACTIVAR ---------- */

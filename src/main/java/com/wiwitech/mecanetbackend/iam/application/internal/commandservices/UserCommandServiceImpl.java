@@ -26,6 +26,8 @@ import com.wiwitech.mecanetbackend.iam.infrastructure.persistence.jpa.repositori
 import com.wiwitech.mecanetbackend.iam.infrastructure.persistence.jpa.repositories.UserRepository;
 import com.wiwitech.mecanetbackend.shared.infrastructure.multitenancy.TenantContext;
 import com.wiwitech.mecanetbackend.iam.domain.model.events.UserCreatedEvent;
+import com.wiwitech.mecanetbackend.iam.domain.exceptions.UserLimitExceededException;
+import com.wiwitech.mecanetbackend.subscription.interfaces.acl.SubscriptionLimitsContextFacade;
 
 /**
  * User command service implementation
@@ -42,17 +44,20 @@ public class UserCommandServiceImpl implements UserCommandService {
     private final HashingService hashingService;
     private final TokenService tokenService;
     private final ApplicationEventPublisher eventPublisher;
+    private final SubscriptionLimitsContextFacade subscriptionLimitsFacade;
     
     public UserCommandServiceImpl(UserRepository userRepository, TenantRepository tenantRepository,
                                  RoleRepository roleRepository, HashingService hashingService, 
                                  TokenService tokenService,
-                                 ApplicationEventPublisher eventPublisher) {
+                                 ApplicationEventPublisher eventPublisher,
+                                 SubscriptionLimitsContextFacade subscriptionLimitsFacade) {
         this.userRepository = userRepository;
         this.tenantRepository = tenantRepository;
         this.roleRepository = roleRepository;
         this.hashingService = hashingService;
         this.tokenService = tokenService;
         this.eventPublisher = eventPublisher;
+        this.subscriptionLimitsFacade = subscriptionLimitsFacade;
     }
     
     @Override
@@ -162,6 +167,13 @@ public class UserCommandServiceImpl implements UserCommandService {
         
         if (userRepository.existsByEmailAndTenantId(command.email(), tenantId)) {
             throw new RuntimeException("Email already exists in this organization");
+        }
+        
+        // Validate user limit before creating
+        if (!subscriptionLimitsFacade.canCreateResource(tenantId, com.wiwitech.mecanetbackend.subscription.domain.model.valueobjects.SubscriptionLimitType.MAX_USERS)) {
+            long currentCount = subscriptionLimitsFacade.getCurrentResourceCount(tenantId, com.wiwitech.mecanetbackend.subscription.domain.model.valueobjects.SubscriptionLimitType.MAX_USERS);
+            long limit = subscriptionLimitsFacade.getResourceLimit(tenantId, com.wiwitech.mecanetbackend.subscription.domain.model.valueobjects.SubscriptionLimitType.MAX_USERS);
+            throw new UserLimitExceededException(tenantId, currentCount, limit);
         }
         
         // Get roles

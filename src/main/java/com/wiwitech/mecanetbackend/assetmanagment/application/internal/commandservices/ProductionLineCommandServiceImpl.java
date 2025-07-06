@@ -14,6 +14,8 @@ import com.wiwitech.mecanetbackend.assetmanagment.infrastructure.persistence.jpa
 import com.wiwitech.mecanetbackend.assetmanagment.infrastructure.persistence.jpa.repositories.ProductionLineRepository;
 import com.wiwitech.mecanetbackend.shared.domain.model.valueobjects.TenantId;
 import com.wiwitech.mecanetbackend.shared.infrastructure.multitenancy.TenantContext;
+import com.wiwitech.mecanetbackend.assetmanagment.domain.exceptions.ProductionLineLimitExceededException;
+import com.wiwitech.mecanetbackend.subscription.interfaces.acl.SubscriptionLimitsContextFacade;
 
 /**
  * Production line command service implementation
@@ -26,11 +28,14 @@ public class ProductionLineCommandServiceImpl implements ProductionLineCommandSe
     
     private final ProductionLineRepository productionLineRepository;
     private final PlantRepository plantRepository;
+    private final SubscriptionLimitsContextFacade subscriptionLimitsFacade;
     
     public ProductionLineCommandServiceImpl(ProductionLineRepository productionLineRepository,
-                                          PlantRepository plantRepository) {
+                                          PlantRepository plantRepository,
+                                          SubscriptionLimitsContextFacade subscriptionLimitsFacade) {
         this.productionLineRepository = productionLineRepository;
         this.plantRepository = plantRepository;
+        this.subscriptionLimitsFacade = subscriptionLimitsFacade;
     }
     
     @Override
@@ -50,6 +55,13 @@ public class ProductionLineCommandServiceImpl implements ProductionLineCommandSe
         // Validar que no exista una línea de producción con el mismo nombre en la planta
         if (productionLineRepository.existsByNameAndPlantIdAndTenantId(command.name(), command.plantId(), tenantId)) {
             throw new RuntimeException("A production line with this name already exists in this plant");
+        }
+        
+        // Validate production line limit before creating
+        if (!subscriptionLimitsFacade.canCreateResource(tenantId, com.wiwitech.mecanetbackend.subscription.domain.model.valueobjects.SubscriptionLimitType.MAX_PRODUCTION_LINES)) {
+            long currentCount = subscriptionLimitsFacade.getCurrentResourceCount(tenantId, com.wiwitech.mecanetbackend.subscription.domain.model.valueobjects.SubscriptionLimitType.MAX_PRODUCTION_LINES);
+            long limit = subscriptionLimitsFacade.getResourceLimit(tenantId, com.wiwitech.mecanetbackend.subscription.domain.model.valueobjects.SubscriptionLimitType.MAX_PRODUCTION_LINES);
+            throw new ProductionLineLimitExceededException(tenantId, currentCount, limit);
         }
         
         ProductionLine productionLine = ProductionLine.createNew(
