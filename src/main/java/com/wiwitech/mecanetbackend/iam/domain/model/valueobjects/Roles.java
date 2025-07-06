@@ -7,7 +7,6 @@ package com.wiwitech.mecanetbackend.iam.domain.model.valueobjects;
  * </p>
  */
 public enum Roles {
-    ROLE_USER,
     ROLE_ADMIN,
-    ROLE_INSTRUCTOR
+    ROLE_TECHNICAL
 }

@@ -1,31 +1,45 @@
 package com.wiwitech.mecanetbackend.iam.domain.services;
 
-
-import com.wiwitech.mecanetbackend.iam.domain.model.aggregates.User;
-import com.wiwitech.mecanetbackend.iam.domain.model.commands.SignInCommand;
-import com.wiwitech.mecanetbackend.iam.domain.model.commands.SignUpCommand;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 
-import java.util.Optional;
+import com.wiwitech.mecanetbackend.iam.domain.model.aggregates.User;
+import com.wiwitech.mecanetbackend.iam.domain.model.commands.SignUpCommand;
+
+import com.wiwitech.mecanetbackend.iam.domain.model.commands.CreateUserCommand;
+import com.wiwitech.mecanetbackend.iam.domain.model.commands.DeleteUserCommand;
+import com.wiwitech.mecanetbackend.iam.domain.model.commands.UpdateUserCommand;
 
 /**
- * User command service
- * <p>
- *     This interface represents the service to handle user commands.
- * </p>
+ * User command service interface
+ * This service handles user command operations
  */
 public interface UserCommandService {
+    
     /**
-     * Handle sign in command
-     * @param command the {@link SignInCommand} command
-     * @return an {@link Optional} of {@link ImmutablePair} of {@link User} and {@link String}
+     * Handle sign up command (creates tenant + admin user)
+     * @param command the sign up command
+     * @return pair of created user and JWT token
      */
-    Optional<ImmutablePair<User, String>> handle(SignInCommand command);
-
+    ImmutablePair<User, String> handle(SignUpCommand command);
+    
     /**
-     * Handle sign up command
-     * @param command the {@link SignUpCommand} command
-     * @return an {@link Optional} of {@link User} entity
+     * Handle create user command (admin creates new user)
+     * @param command the create user command
+     * @return the created user
      */
-    Optional<User> handle(SignUpCommand command);
-}
+    User handle(CreateUserCommand command);
+    
+    /**
+     * Handle update user command
+     * @param command the update user command
+     * @return the updated user
+     */
+    User handle(UpdateUserCommand command);
+    
+    /**
+     * Handle delete user command (deactivate user)
+     * @param command the delete user command
+     * @return the deactivated user
+     */
+    User handle(DeleteUserCommand command);
+} 

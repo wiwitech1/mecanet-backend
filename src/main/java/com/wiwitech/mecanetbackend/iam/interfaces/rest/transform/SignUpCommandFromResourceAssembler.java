@@ -1,14 +1,36 @@
 package com.wiwitech.mecanetbackend.iam.interfaces.rest.transform;
 
 import com.wiwitech.mecanetbackend.iam.domain.model.commands.SignUpCommand;
-import com.wiwitech.mecanetbackend.iam.domain.model.entities.Role;
 import com.wiwitech.mecanetbackend.iam.interfaces.rest.resources.SignUpResource;
+import com.wiwitech.mecanetbackend.shared.domain.model.valueobjects.EmailAddress;
+import com.wiwitech.mecanetbackend.shared.domain.model.valueobjects.PhoneNumber;
 
-import java.util.*;
-
+/**
+ * Assembler to convert SignUpResource to SignUpCommand
+ */
 public class SignUpCommandFromResourceAssembler {
+    
+    /**
+     * Transform from SignUpResource to SignUpCommand
+     * @param resource the SignUpResource
+     * @return the SignUpCommand
+     */
     public static SignUpCommand toCommandFromResource(SignUpResource resource) {
-        var roles = resource.roles() != null ? resource.roles().stream().map(name -> Role.toRoleFromName(name)).toList() : new ArrayList<Role>();
-        return new SignUpCommand(resource.username(), resource.password(), roles);
+        return new SignUpCommand(
+            resource.ruc(),
+            resource.legalName(),
+            resource.commercialName(),
+            resource.address(),
+            resource.city(),
+            resource.country(),
+            resource.tenantPhone() != null ? new PhoneNumber(resource.tenantPhone()) : null,
+            new EmailAddress(resource.tenantEmail()),
+            resource.website(),
+            resource.username(),
+            resource.password(),
+            new EmailAddress(resource.email()),
+            resource.firstName(),
+            resource.lastName()
+        );
     }
-}
+} 
