@@ -17,7 +17,7 @@ import java.util.List;
  */
 @Repository
 public interface StockMovementRepository extends JpaRepository<StockMovement, Long> {
-
+    
     /**
      * Buscar movimientos por item de inventario y tenant
      */
