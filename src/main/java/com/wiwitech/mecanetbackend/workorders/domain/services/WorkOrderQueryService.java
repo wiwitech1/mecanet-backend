@@ -12,4 +12,6 @@ import java.util.Optional;
 public interface WorkOrderQueryService {
     Optional<WorkOrder> handle(GetWorkOrderByIdQuery query);
     List<WorkOrder> handle(GetWorkOrdersByStatusQuery query);
+    List<WorkOrder> handle(GetWorkOrdersByMachineQuery query);
+    List<WorkOrder> handle(GetWorkOrdersByTechnicianQuery query);
 } 
