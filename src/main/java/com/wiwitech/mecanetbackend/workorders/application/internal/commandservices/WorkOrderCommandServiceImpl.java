@@ -8,7 +8,6 @@ import com.wiwitech.mecanetbackend.workorders.domain.services.WorkOrderCommandSe
 import com.wiwitech.mecanetbackend.workorders.infrastructure.persistence.jpa.repositories.WorkOrderRepository;
 import com.wiwitech.mecanetbackend.workorders.infrastructure.persistence.jpa.repositories.TechnicianRepository;
 import com.wiwitech.mecanetbackend.workorders.interfaces.acl.InventoryContextFacade;
-import com.wiwitech.mecanetbackend.workorders.interfaces.acl.CompetencyContextFacade;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -29,7 +28,6 @@ public class WorkOrderCommandServiceImpl implements WorkOrderCommandService {
     private final WorkOrderRepository workOrderRepo;
     private final TechnicianRepository technicianRepo;
     private final InventoryContextFacade inventoryAcl;
-    private final CompetencyContextFacade competencyAcl;
 
     /* ---------- helpers ---------- */
     private WorkOrder loadWorkOrder(WorkOrderId id) {
@@ -95,7 +93,7 @@ public class WorkOrderCommandServiceImpl implements WorkOrderCommandService {
         WorkOrder wo = loadWorkOrder(cmd.workOrderId());
         var tech = technicianRepo.findById(cmd.technicianId().getValue())
                 .orElseThrow(() -> new IllegalArgumentException("Technician not found"));
-        competencyAcl.validateSkills(cmd.technicianId(), wo.getRequiredSkillIds());
+        // Skill validation removed - any technician can join any work order
         wo.joinTechnician(cmd.technicianId(),
                 tech.getSupervisor() == null ? TechnicianRole.MEMBER : TechnicianRole.SUPERVISOR);
         return workOrderRepo.save(wo);
@@ -113,7 +111,7 @@ public class WorkOrderCommandServiceImpl implements WorkOrderCommandService {
     @Transactional
     public WorkOrder handle(UpdateMaterialsCommand cmd) {
         WorkOrder wo = loadWorkOrder(cmd.workOrderId());
-        inventoryAcl.reserveMaterials(cmd.workOrderId(), cmd.materials());
+        // No material reservations - materials are only deducted when work order completes
         wo.updateMaterials(cmd.materials());
         return workOrderRepo.save(wo);
     }
@@ -122,7 +120,7 @@ public class WorkOrderCommandServiceImpl implements WorkOrderCommandService {
     @Transactional
     public WorkOrder handle(StartWorkOrderCommand cmd) {
         WorkOrder wo = loadWorkOrder(cmd.workOrderId());
-        inventoryAcl.consumeReservations(cmd.workOrderId());
+        // No reservations to consume - stock is only deducted when work order completes
         wo.start(cmd.startAt());
         return workOrderRepo.save(wo);
     }
@@ -131,7 +129,19 @@ public class WorkOrderCommandServiceImpl implements WorkOrderCommandService {
     @Transactional
     public WorkOrder handle(CompleteWorkOrderCommand cmd) {
         WorkOrder wo = loadWorkOrder(cmd.workOrderId());
-        inventoryAcl.finalizeConsumptions(cmd.workOrderId(), java.util.Map.of());
+        
+        // Build final quantities map from work order materials
+        var finalQtyPerItem = wo.getMaterials().stream()
+                .collect(Collectors.toMap(
+                    material -> material.getItemId().getValue(),
+                    material -> material.getFinalQty() != null ? material.getFinalQty() : material.getRequestedQty()
+                ));
+        
+        // Deduct stock for consumed materials
+        if (!finalQtyPerItem.isEmpty()) {
+            inventoryAcl.deductStock(cmd.workOrderId(), finalQtyPerItem);
+        }
+        
         wo.complete(cmd.endAt(), cmd.conclusions());
         return workOrderRepo.save(wo);
     }
@@ -149,6 +159,14 @@ public class WorkOrderCommandServiceImpl implements WorkOrderCommandService {
     public WorkOrder handle(AddPhotoCommand cmd) {
         WorkOrder wo = loadWorkOrder(cmd.workOrderId());
         wo.addPhoto(cmd.authorUserId(), cmd.url());
+        return workOrderRepo.save(wo);
+    }
+
+    @Override
+    @Transactional
+    public WorkOrder handle(UpdateFinalQuantitiesCommand cmd) {
+        WorkOrder wo = loadWorkOrder(cmd.workOrderId());
+        wo.updateFinalQuantities(cmd.finalQuantities());
         return workOrderRepo.save(wo);
     }
 } 
