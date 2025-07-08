@@ -19,4 +19,5 @@ public interface WorkOrderCommandService {
     WorkOrder handle(CompleteWorkOrderCommand command);
     WorkOrder handle(AddCommentCommand command);
     WorkOrder handle(AddPhotoCommand command);
+    WorkOrder handle(UpdateFinalQuantitiesCommand command);
 } 

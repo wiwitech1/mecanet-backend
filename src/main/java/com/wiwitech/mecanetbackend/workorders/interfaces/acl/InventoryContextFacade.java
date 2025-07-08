@@ -1,22 +1,20 @@
 package com.wiwitech.mecanetbackend.workorders.interfaces.acl;
 
 import com.wiwitech.mecanetbackend.workorders.domain.model.valueobjects.WorkOrderId;
-import com.wiwitech.mecanetbackend.workorders.domain.model.commands.UpdateMaterialsCommand;
-import java.util.Set;
 import java.util.Map;
 
 /**
  * ACL port that allows WorkOrders BC to interact with Inventory BC without
  * depending on its internal API or schema.
+ * 
+ * Simplified version - only deducts stock when work order completes.
  */
 public interface InventoryContextFacade {
 
-    /** Reserve the requested materials when order is still being prepared */
-    void reserveMaterials(WorkOrderId workOrderId, Set<UpdateMaterialsCommand.MaterialLine> lines);
-
-    /** Consume previously reserved stock when execution starts */
-    void consumeReservations(WorkOrderId workOrderId);
-
-    /** Finalize the consumption with real quantities at completion */
-    void finalizeConsumptions(WorkOrderId workOrderId, Map<Long, Integer> finalQtyPerItem);
+    /** 
+     * Deduct the actual consumed materials from inventory stock when work order completes.
+     * @param workOrderId the work order that is completing
+     * @param finalQtyPerItem map of inventory item ID to final consumed quantity
+     */
+    void deductStock(WorkOrderId workOrderId, Map<Long, Integer> finalQtyPerItem);
 } 

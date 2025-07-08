@@ -6,6 +6,8 @@ import com.wiwitech.mecanetbackend.workorders.domain.model.queries.*;
 import com.wiwitech.mecanetbackend.workorders.domain.model.commands.*;
 import com.wiwitech.mecanetbackend.workorders.domain.model.valueobjects.WorkOrderId;
 import com.wiwitech.mecanetbackend.workorders.domain.model.valueobjects.WorkOrderStatus;
+import com.wiwitech.mecanetbackend.workorders.domain.model.valueobjects.MachineId;
+import com.wiwitech.mecanetbackend.workorders.domain.model.valueobjects.TechnicianId;
 import com.wiwitech.mecanetbackend.workorders.domain.model.aggregates.WorkOrder;
 import com.wiwitech.mecanetbackend.workorders.interfaces.rest.resources.WorkOrderRequestResource;
 import com.wiwitech.mecanetbackend.workorders.interfaces.rest.resources.WorkOrderResponseResource;
@@ -131,5 +133,26 @@ public class WorkOrdersController {
     public ResponseEntity<WorkOrder> addPhoto(@PathVariable Long id, @RequestBody AddPhotoCommand cmd) {
         WorkOrder wo = commandService.handle(new AddPhotoCommand(new WorkOrderId(id), cmd.authorUserId(), cmd.url()));
         return ResponseEntity.ok(wo);
+    }
+
+    @PostMapping("/{id}/final-quantities")
+    @Operation(summary = "Update final material quantities", description = "Update the final quantities of materials used during work order execution.")
+    public ResponseEntity<WorkOrder> updateFinalQuantities(@PathVariable Long id, @RequestBody UpdateFinalQuantitiesCommand cmd) {
+        WorkOrder wo = commandService.handle(new UpdateFinalQuantitiesCommand(new WorkOrderId(id), cmd.finalQuantities()));
+        return ResponseEntity.ok(wo);
+    }
+
+    @GetMapping("/by-machine/{machineId}")
+    @Operation(summary = "Get work orders by machine", description = "Retrieve all work orders for a specific machine.")
+    public List<WorkOrderResponseResource> getByMachine(@PathVariable Long machineId) {
+        List<WorkOrder> list = queryService.handle(new GetWorkOrdersByMachineQuery(new MachineId(machineId)));
+        return list.stream().map(WorkOrderResourceFromEntityAssembler::toResource).toList();
+    }
+
+    @GetMapping("/by-technician/{technicianId}")
+    @Operation(summary = "Get work orders by technician", description = "Retrieve all work orders assigned to a specific technician.")
+    public List<WorkOrderResponseResource> getByTechnician(@PathVariable Long technicianId) {
+        List<WorkOrder> list = queryService.handle(new GetWorkOrdersByTechnicianQuery(new TechnicianId(technicianId)));
+        return list.stream().map(WorkOrderResourceFromEntityAssembler::toResource).toList();
     }
 } 
