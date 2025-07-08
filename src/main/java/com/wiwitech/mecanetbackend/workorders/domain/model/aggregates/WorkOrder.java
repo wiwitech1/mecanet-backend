@@ -197,6 +197,20 @@ public class WorkOrder extends AuditableAbstractAggregateRoot<WorkOrder> {
         photos.add(new WorkOrderPhoto(url, authorUserId));
     }
 
+    public void updateFinalQuantities(java.util.Map<Long, Integer> finalQuantities) {
+        if (status != WorkOrderStatus.IN_EXECUTION)
+            throw new InvalidWorkOrderStateException("Final quantities can only be updated while IN_EXECUTION");
+        
+        finalQuantities.forEach((itemId, finalQty) -> {
+            WorkOrderMaterial material = materials.stream()
+                    .filter(m -> m.getItemId().getValue().equals(itemId))
+                    .findFirst()
+                    .orElseThrow(() -> new IllegalArgumentException("Material not found: " + itemId));
+            
+            material.setFinalQty(finalQty);
+        });
+    }
+
     @Override
     public String toString() {
         return "WorkOrder{" + workOrderId + ", status=" + status + '}';

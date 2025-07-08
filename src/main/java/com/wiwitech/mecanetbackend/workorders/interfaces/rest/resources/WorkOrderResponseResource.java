@@ -22,4 +22,9 @@ public class WorkOrderResponseResource {
     public Long tenantId;
     public LocalDateTime createdAt;
     public LocalDateTime updatedAt;
+    
+    // Enhanced information
+    public List<TechnicianSummaryResource> technicians;
+    public List<MaterialDetailResource> materials;
+    public ExecutionSummaryResource executionSummary;
 } 
